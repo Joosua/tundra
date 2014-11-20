@@ -40,7 +40,7 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 export TUNDRA_PYTHON_ENABLED=TRUE
-export BOOSTUSE148=true
+export BOOSTUSE148=false
 
 if [ "$BOOSTUSE148" = "true" ] ; then
     boostpackage=libboost1.48-all-dev
@@ -48,7 +48,7 @@ else
     boostpackage=libboost-all-dev
 fi
 
-if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal|nadia|raring|olivia" && tty >/dev/null; then
+if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|katya|julia|isadora|quantal|nadia|raring|olivia|trusty" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
     sudo aptitude -y install git-core python-dev libogg-dev libvorbis-dev \
      build-essential g++ $boostpackage libois-dev \
@@ -63,7 +63,7 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|kat
      protobuf-c-compiler protobuf-compiler \
      libqt4-opengl-dev libqtwebkit-dev \
      libspeexdsp-dev libprotobuf-dev \
-     libvlc-dev
+     libvlc-dev libssl-dev
 
 elif lsb_release -d | egrep -q -e "Debian GNU/Linux" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
