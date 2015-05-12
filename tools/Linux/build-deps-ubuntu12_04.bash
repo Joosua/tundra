@@ -56,14 +56,13 @@ if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|maya|lisa|kat
      libxml2-dev cmake libalut-dev libtheora-dev ed \
      liboil0.3-dev mercurial unzip xsltproc libois-dev libxrandr-dev \
      libspeex-dev nvidia-cg-toolkit subversion \
-     libfreetype6-dev libfreeimage-dev libzzip-dev \
      libxaw7-dev libgl1-mesa-dev libglu1-mesa-dev \
      libvlc-dev libspeexdsp-dev libprotobuf-dev \
      libprotobuf-c0 libprotobuf-c0-dev \
      protobuf-c-compiler protobuf-compiler \
      libqt4-opengl-dev libqtwebkit-dev \
      libspeexdsp-dev libprotobuf-dev \
-     libvlc-dev libssl-dev
+     libvlc-dev libssl-dev libx11-dev
 
 elif lsb_release -d | egrep -q -e "Debian GNU/Linux" && tty >/dev/null; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
@@ -73,23 +72,16 @@ elif lsb_release -d | egrep -q -e "Debian GNU/Linux" && tty >/dev/null; then
      libxml2-dev cmake libalut-dev libtheora-dev ed \
      liboil0.3-dev mercurial unzip xsltproc libois-dev libxrandr-dev \
      libspeex-dev nvidia-cg-toolkit subversion \
-     libfreetype6-dev libfreeimage-dev libzzip-dev \
      libxaw7-dev libgl1-mesa-dev libglu1-mesa-dev \
      libvlc-dev libspeexdsp-dev libprotobuf-dev \
      libprotobuf-c0 libprotobuf-c0-dev \
      protobuf-c-compiler protobuf-compiler \
      libqt4-opengl-dev libqtwebkit-dev \
      libspeexdsp-dev libprotobuf-dev \
-     libvlc-dev
+     libvlc-dev libx11-dev
 
 else
     echo "Unknown Linux distribution, please update the build script for your distro and file a pull request, or file a bug report on the tracker."
-fi
-
-if lsb_release -c | egrep -q "precise|quantal|trusty" && tty >/dev/null; then
-   if [ ! -d "/usr/include/freetype" ]; then
-       sudo ln -s /usr/include/freetype2/ /usr/include/freetype
-   fi
 fi
 
 what=qjson
@@ -233,6 +225,23 @@ else
     touch $tags/$what-done
 fi
 
+what=ogredeps
+if test -f $tags/$what-done; then 
+   echo $what is done
+else
+    cd $build
+    rm -rf $what
+    hg clone https://bitbucket.org/cabalistic/ogredeps $what
+    cd $what
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$prefix
+    make -j $nprocs
+    make install
+    touch $tags/$what-done
+fi
+
+ogredeps=$build/$what/build
 what=ogre-safe-nocrashes
 if test -f $tags/$what-done; then 
    echo "Testing whether there are new changes in $what"
@@ -251,21 +260,13 @@ else
         echo "$what does not exist. Cloning a new copy..."
         hg clone https://bitbucket.org/clb/ogre-safe-nocrashes
     fi
-
-    if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric|precise|quantal|raring" && tty >/dev/null; then
-        sudo apt-get build-dep libogre-dev
-    elif lsb_release -d | egrep -q -e "Debian GNU/Linux" && tty >/dev/null; then
-        sudo apt-get build-dep libogre-1.8-dev
-    else
-        echo "Unknown Linux distribution, please update the build script for your distro and file a pull request, or file a bug report on the tracker."
-    fi
     cd $what
     hg checkout v1-9 # Make sure we are in the right branch
     # Fix linking with recent boost libs
     sed -i -s 's/OGRE_BOOST_COMPONENTS thread/OGRE_BOOST_COMPONENTS system thread/' CMake/Dependencies.cmake
     mkdir -p $what-build
     cd $what-build  
-    cmake .. -DCMAKE_INSTALL_PREFIX=$prefix -DOGRE_BUILD_PLUGIN_BSP:BOOL=OFF -DOGRE_BUILD_PLUGIN_PCZ:BOOL=OFF -DOGRE_BUILD_SAMPLES:BOOL=OFF
+    cmake .. -DCMAKE_INSTALL_PREFIX=$prefix -DOGRE_BUILD_PLUGIN_BSP:BOOL=OFF -DOGRE_BUILD_PLUGIN_PCZ:BOOL=OFF
     make -j $nprocs VERBOSE=1
     make install
     touch $tags/$what-done
